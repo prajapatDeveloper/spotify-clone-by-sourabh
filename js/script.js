@@ -3,6 +3,7 @@ let songUL;
 let currFolder;
 let songs;
 let currentIndex = 0
+
 function secondsToMinutesSeconds(seconds) {
     if (isNaN(seconds) || seconds < 0) {
         return "00:00"
@@ -19,7 +20,7 @@ function secondsToMinutesSeconds(seconds) {
 
 async function getSongs(folder) {
     currFolder = folder
-    let a = await fetch(`/${folder}/`)
+    let a = await fetch(`${window.location.origin}/${folder}/`) // Changed URL to dynamic path
     let response = await a.text()
     let div = document.createElement("div")
     div.innerHTML = response
@@ -51,16 +52,12 @@ async function getSongs(folder) {
         e.addEventListener("click", element => {
             playMusic(e.querySelector(".info").firstElementChild.innerHTML)
         })
-
     })
     return songs
-
 }
 
-
-
 const playMusic = (track, pause = false) => {
-    currentSong.src = `/${currFolder}/` + track
+    currentSong.src = `${window.location.origin}/${currFolder}/` + track // Changed URL to dynamic path
     if (!pause) {
         currentSong.play()
         play.src = "assets/pause.svg"
@@ -70,19 +67,18 @@ const playMusic = (track, pause = false) => {
 }
 
 async function displayAlbums() {
-    let a = await fetch(`/songs/`)
+    let a = await fetch(`${window.location.origin}/songs/`) // Changed URL to dynamic path
     let response = await a.text()
     let div = document.createElement("div")
     div.innerHTML = response
     let anchors = div.getElementsByTagName("a")
     let array = Array.from(anchors)
-    for(let i=0; i< array.length; i++)
-    {
+    for (let i = 0; i < array.length; i++) {
         const e = array[i]
         if (e.href.includes("/songs") && !e.href.includes(".htaccess")) {
             let folder = e.href.split("/").slice(-2)[0]
             //Get metaData of the folder
-            let a = await fetch(`/songs/${folder}/info.json`)
+            let a = await fetch(`${window.location.origin}/songs/${folder}/info.json`) // Changed URL to dynamic path
             let cardContainer = document.querySelector(".cardContainer")
             let response = await a.json()
             cardContainer.innerHTML = cardContainer.innerHTML + `<div data-folder="${folder}" class="card">
@@ -93,25 +89,23 @@ async function displayAlbums() {
                                     stroke-linejoin="round" />
                             </svg>
                         </div>
-                        <img src="/songs/${folder}/cover.jpeg" alt="">
+                        <img src="${window.location.origin}/songs/${folder}/cover.jpeg" alt=""> <!-- Dynamic URL -->
                         <h2>${response.title}</h2>
                         <p>${response.description}</p>
                     </div>`
         }
     }
 
-     //Load another playlist when card was clicked
-     Array.from(document.getElementsByClassName("card")).forEach(e => {
+    //Load another playlist when card was clicked
+    Array.from(document.getElementsByClassName("card")).forEach(e => {
         e.addEventListener("click", async item => {
             songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`)
             playMusic(songs[0])
         })
-        
     })
 }
 
 async function main() {
-
     //Get all the albums on the page
     displayAlbums()
 
@@ -137,37 +131,37 @@ async function main() {
         document.querySelector(".circle").style.left = (currentSong.currentTime / currentSong.duration) * 100 + "%"
     })
 
-    //Add a event Listener to seekbar
+    //Add an event listener to seekbar
     document.querySelector(".seekbar").addEventListener("click", e => {
         let percent = (e.offsetX / e.target.getBoundingClientRect().width) * 100
         document.querySelector(".circle").style.left = percent + "%"
         currentSong.currentTime = ((currentSong.duration) * percent / 100)
     })
 
-    //Add a event listener to skip song by 5sec. 
-    document.addEventListener("keydown" , e =>{
-        if(e.key === "ArrowRight"){
+    //Add an event listener to skip song by 5sec. 
+    document.addEventListener("keydown", e => {
+        if (e.key === "ArrowRight") {
             currentSong.currentTime += 5
         }
-        else if(e.key === "ArrowLeft"){
+        else if (e.key === "ArrowLeft") {
             currentSong.currentTime -= 10
 
             //to prevent negative time
-            if(currentSong.currentTime < 0){
+            if (currentSong.currentTime < 0) {
                 currentSong.currentTime = 0
             }
         }
     })
 
     //Add an event listener to play next song automatically
-    currentSong.addEventListener("ended" , ()=>{
+    currentSong.addEventListener("ended", () => {
         currentIndex++
-        if(currentIndex >= songs.length){
+        if (currentIndex >= songs.length) {
             currentIndex = 0
         }
         playMusic(songs[currentIndex])
     })
-    
+
     //Add an event listener for hamburger
     document.querySelector(".hamburger").addEventListener("click", () => {
         document.querySelector(".left").style.left = "0"
@@ -199,27 +193,27 @@ async function main() {
     //Add an event listener to change volume
     document.querySelector(".range").getElementsByTagName("input")[0].addEventListener("change", (e) => {
         currentSong.volume = parseInt(e.target.value) / 100
-        if(currentSong.volume == 0){
-            document.querySelector(".volume>img").src = document.querySelector(".volume>img").src.replace("assets/volume.svg" , "assets/mute.svg")
+        if (currentSong.volume == 0) {
+            document.querySelector(".volume>img").src = document.querySelector(".volume>img").src.replace("assets/volume.svg", "assets/mute.svg")
         }
-        else{
-            document.querySelector(".volume>img").src = document.querySelector(".volume>img").src.replace("assets/mute.svg" , "assets/volume.svg")
+        else {
+            document.querySelector(".volume>img").src = document.querySelector(".volume>img").src.replace("assets/mute.svg", "assets/volume.svg")
         }
     })
 
     //Add event listener to mute the track
-    document.querySelector(".volume>img").addEventListener("click" , e => {
-        if(e.target.src.includes("assets/volume.svg")){
+    document.querySelector(".volume>img").addEventListener("click", e => {
+        if (e.target.src.includes("assets/volume.svg")) {
             e.target.src = e.target.src.replace("assets/volume.svg", "assets/mute.svg")
             currentSong.volume = 0
             document.querySelector(".range").getElementsByTagName("input")[0].value = 0
         }
-        else{
-            e.target.src = e.target.src.replace("assets/mute.svg" , "assets/volume.svg")
+        else {
+            e.target.src = e.target.src.replace("assets/mute.svg", "assets/volume.svg")
             currentSong.volume = 0.1
             document.querySelector(".range").getElementsByTagName("input")[0].value = 10
         }
     })
-
 }
+
 main()
